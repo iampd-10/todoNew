@@ -4,6 +4,7 @@ import userSchema from "../models/userSchema.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { verifyEmail } from "../verifyEmail/verifyEmail.js";
+import e from "express";
 
 const JWT_SECRET = process.env.secretKey;
 
@@ -52,6 +53,75 @@ export const userRegistration = async (req, res) => {
   } catch (error) {
     return res.status(500).json({
       sucess: false,
+      message: `Server error ${error.message}`,
+    });
+  }
+};
+
+export const loginUser = async (req, res) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: "All fields are required" });
+  }
+
+  try {
+    const checkUser = await userSchema.findOne({ email: email });
+    if (!checkUser) {
+      return res.status(400).json({ message: "User not found" });
+    }
+
+    const isPasswordMatch = await bcrypt.compare(password, checkUser.password);
+    if (!isPasswordMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    if (!checkUser.isVerified) {
+      return res.status(400).json({ message: "Please verify your email" });
+    }
+
+    if (checkUser.token) {
+      return res.status(400).json({ message: "Verification pending" });
+    }
+
+    // generate tokens
+    const accessToken = jwt.sign({ id: checkUser._id }, JWT_SECRET, {
+      expiresIn: "10d",
+    });
+
+    const refreshToken = jwt.sign({ id: checkUser._id }, JWT_SECRET, {
+      expiresIn: "30d",
+    });
+
+    checkUser.isLoggedIn = true;
+    await checkUser.save();
+
+    return res.status(200).json({
+      success: true,
+      message: `Login successful. Welcome ${checkUser.fullname}`,
+      accessToken,
+      refreshToken,
+      user: checkUser,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: `Server error ${error.message}`,
+    });
+  }
+};
+export const logoutUser = async (req, res) => {
+  const { email } = req.body;
+  console.log(req.body);
+  try {
+    const user = await userSchema.findOne({ email: email });
+    user.isLoggedIn = false;
+
+    await user.save();
+    return res.status(200).json({ message: "Logout successful" });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
       message: `Server error ${error.message}`,
     });
   }
