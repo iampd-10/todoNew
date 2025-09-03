@@ -4,7 +4,7 @@ import userSchema from "../models/userSchema.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { verifyEmail } from "../verifyEmail/verifyEmail.js";
-import e from "express";
+
 
 const JWT_SECRET = process.env.secretKey;
 

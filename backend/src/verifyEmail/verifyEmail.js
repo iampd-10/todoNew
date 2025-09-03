@@ -1,6 +1,8 @@
 import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 dotenv.config();
+const email1 = process.env.email;
+const password1 = process.env.password;
 
 export const verifyEmail = async (token, email, fullName,  password) => {
   console.log("verifyEmail() called with email:", email); 
@@ -11,8 +13,8 @@ export const verifyEmail = async (token, email, fullName,  password) => {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: process.env.email,
-      pass: process.env.password,
+      user: email1,
+      pass: password1,
     },
   });
 
@@ -22,7 +24,7 @@ export const verifyEmail = async (token, email, fullName,  password) => {
 
 
   const mailConfigurations = {
-    from: process.env.email,
+    from: email1,
     to: email,
     subject: `Hii ${fullName} Email Verification for iampd10 Shop`,
     text: `Hi ${fullName},
